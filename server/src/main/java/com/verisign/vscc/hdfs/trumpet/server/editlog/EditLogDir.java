@@ -41,6 +41,9 @@ public class EditLogDir {
             @Override
             public boolean accept(File pathname) {
                 if (pathname.isDirectory()) {
+                    if (CURRENT.equals(pathname.getName())) {
+                        return true;
+                    }
                     File[] currents = pathname.listFiles(new FilenameFilter() {
                         @Override
                         public boolean accept(File dir, String name) {
@@ -58,8 +61,11 @@ public class EditLogDir {
                 " " + rootDir + "/*/current.");
         Preconditions.checkState(editLogDirs.length == 1, "No folder or too many folders matching edit log dir structure in rootDir:" +
                 " " + rootDir + "/*/current.");
-
-        this.editLogDir = new File(editLogDirs[0], CURRENT);
+        if (CURRENT.equals(editLogDirs[0].getName())) {
+            this.editLogDir = editLogDirs[0];
+        } else {
+            this.editLogDir = new File(editLogDirs[0], CURRENT);
+        }
 
         Preconditions.checkState(this.editLogDir.isDirectory());
         Preconditions.checkState(this.editLogDir.canRead());
