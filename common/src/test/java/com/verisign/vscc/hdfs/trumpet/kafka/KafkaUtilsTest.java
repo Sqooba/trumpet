@@ -1,18 +1,15 @@
 package com.verisign.vscc.hdfs.trumpet.kafka;
 
-import com.google.common.base.Joiner;
 import org.apache.curator.CuratorZookeeperClient;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.ExistsBuilder;
 import org.apache.curator.framework.api.GetChildrenBuilder;
 import org.apache.curator.framework.api.GetDataBuilder;
-import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
 import org.junit.Test;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.*;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 

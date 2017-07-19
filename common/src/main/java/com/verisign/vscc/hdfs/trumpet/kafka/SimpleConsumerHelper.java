@@ -7,11 +7,7 @@ import kafka.api.FetchRequest;
 import kafka.api.FetchRequestBuilder;
 import kafka.api.PartitionOffsetRequestInfo;
 import kafka.common.ErrorMapping;
-import kafka.common.LeaderNotAvailableException;
 import kafka.common.TopicAndPartition;
-import kafka.common.UnknownTopicOrPartitionException;
-import kafka.consumer.Consumer;
-import kafka.consumer.ConsumerConfig;
 import kafka.javaapi.*;
 import kafka.javaapi.consumer.SimpleConsumer;
 import kafka.javaapi.message.ByteBufferMessageSet;
@@ -26,7 +22,6 @@ import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -36,8 +31,8 @@ import java.util.*;
  * published txId, but the API requires some boiler plate which is put here to keep
  * the rest of the code reasonably lean.
  *
- * @see https://cwiki.apache.org/confluence/display/KAFKA/0.8.0+SimpleConsumer+Example
- * @see https://gist.github.com/ashrithr/5811266
+ * @link https://cwiki.apache.org/confluence/display/KAFKA/0.8.0+SimpleConsumer+Example
+ * @link https://gist.github.com/ashrithr/5811266
  */
 public class SimpleConsumerHelper {
 
@@ -46,6 +41,18 @@ public class SimpleConsumerHelper {
     private static final int DEFAULT_ZK_PORT = 2181;
     private static final int DEFAULT_SO_TIMEOUT_MS = 10000;
     private static final int DEFAULT_BUFFER_SIZE = 64 * 1024;
+    public static final int DEFAULT_REQUIRED_ACKS = 1;
+
+    private static String securityProtocol = "PLAINTEXT";
+
+    public static void setSecurityProtocol(String p_securityProtocol) {
+        securityProtocol = p_securityProtocol;
+    }
+
+    public static String getSecurityProtocol() {
+        return securityProtocol;
+    }
+
 
     private static long[] getLatestOffsets(SimpleConsumer consumer, String topic, int partition,
                                            long whichTime, String clientName, int numberOfOffests) {
@@ -81,7 +88,7 @@ public class SimpleConsumerHelper {
     }
 
     public static long getLastOffset(CuratorFramework curatorFramework, String topic, int partition) throws Exception {
-        String clientId = "GetLastOffsetFor" + topic + "-" + partition;
+        String clientId = "GetLastOffsetFor_" + topic + "-" + partition;
         SimpleConsumer c = SimpleConsumerHelper.getSimpleConsumerForTopicAndPartition(curatorFramework, topic, partition, clientId);
         try {
             return SimpleConsumerHelper.getLastOffset(c, topic, partition, kafka.api.OffsetRequest.LatestTime(), clientId);
@@ -105,12 +112,12 @@ public class SimpleConsumerHelper {
         }
         String leadBrokerHost = metadata.leader().host();
         int leadBrokerPort = metadata.leader().port();
-        final String clientName = "Client_" + topic + "_" + partition;
+        final String clientName = "Trumpet_" + topic + "-" + partition;
 
         SimpleConsumer consumer = null;
         long[] readOffsets = null;
         try {
-            consumer = new SimpleConsumer(leadBrokerHost, leadBrokerPort, DEFAULT_SO_TIMEOUT_MS, DEFAULT_BUFFER_SIZE, clientName);
+            consumer = new SimpleConsumer(leadBrokerHost, leadBrokerPort, DEFAULT_SO_TIMEOUT_MS, DEFAULT_BUFFER_SIZE, clientName, getSecurityProtocol());
             readOffsets = getLatestOffsets(consumer, topic, partition, kafka.api.OffsetRequest.LatestTime(), clientName, numberOfMessages);
         } finally {
             if (consumer != null) {
@@ -185,9 +192,9 @@ public class SimpleConsumerHelper {
         }
         String leadBrokerHost = metadata.leader().host();
         int leadBrokerPort = metadata.leader().port();
-        String clientName = "Client_" + topic + "_" + partition;
+        String clientName = "Trumpet_" + topic + "-" + partition;
 
-        SimpleConsumer consumer = new SimpleConsumer(leadBrokerHost, leadBrokerPort, DEFAULT_SO_TIMEOUT_MS, DEFAULT_BUFFER_SIZE, clientName);
+        SimpleConsumer consumer = new SimpleConsumer(leadBrokerHost, leadBrokerPort, DEFAULT_SO_TIMEOUT_MS, DEFAULT_BUFFER_SIZE, clientName, getSecurityProtocol());
         long readOffset = getLastOffset(consumer, topic, partition, kafka.api.OffsetRequest.LatestTime(), clientName);
 
         LOG.debug("Last offset is {}", readOffset);
@@ -217,7 +224,8 @@ public class SimpleConsumerHelper {
                 if (seedParts.length < 1) {
                     continue;
                 }
-                consumer = new SimpleConsumer(seedParts[0], seedParts.length > 1 ? Integer.valueOf(seedParts[1]) : DEFAULT_ZK_PORT, DEFAULT_SO_TIMEOUT_MS, DEFAULT_BUFFER_SIZE, "leaderLookup");
+                String clientName = "Trumpet_" + topic + "-" + partition;
+                consumer = new SimpleConsumer(seedParts[0], seedParts.length > 1 ? Integer.valueOf(seedParts[1]) : DEFAULT_ZK_PORT, DEFAULT_SO_TIMEOUT_MS, DEFAULT_BUFFER_SIZE, clientName, getSecurityProtocol());
                 TopicMetadataRequest req = new TopicMetadataRequest(topics);
                 kafka.javaapi.TopicMetadataResponse resp = consumer.send(req);
 
@@ -242,6 +250,10 @@ public class SimpleConsumerHelper {
     }
 
     public static Producer<String, String> getProducer(CuratorFramework curatorFramework) throws Exception {
+        return getProducer(curatorFramework, DEFAULT_REQUIRED_ACKS);
+    }
+
+    public static Producer<String, String> getProducer(CuratorFramework curatorFramework, int requiredAcks) throws Exception {
 
         List<String> brokers = KafkaUtils.retrieveBrokerListFromZK(curatorFramework);
         Preconditions.checkState(brokers.size() > 0);
@@ -249,7 +261,12 @@ public class SimpleConsumerHelper {
         Properties props = new Properties();
         props.put("metadata.broker.list", Joiner.on(",").join(brokers));
         props.put("serializer.class", StringEncoder.class.getCanonicalName());
-        props.put("request.required.acks", "-1");
+        props.put("request.required.acks", String.valueOf(requiredAcks));
+        props.put("security.protocol", getSecurityProtocol());
+
+        if (getSecurityProtocol() != null && getSecurityProtocol().startsWith("SASL")) {
+            props.put("sasl.kerberos.service.name", "kafka");
+        }
 
         LOG.info("Getting a new producer with the following properties: {}", props);
 
@@ -272,16 +289,16 @@ public class SimpleConsumerHelper {
         String broker = brokers.get(R.nextInt(brokers.size()));
         String[] brokerParts = StringUtils.split(broker, ":");
         Preconditions.checkState(brokerParts.length > 0);
-        return new SimpleConsumer(brokerParts[0], brokerParts.length > 1 ? Integer.valueOf(brokerParts[1]) : DEFAULT_ZK_PORT, DEFAULT_SO_TIMEOUT_MS, DEFAULT_BUFFER_SIZE, clientId);
+        return new SimpleConsumer(brokerParts[0], brokerParts.length > 1 ? Integer.valueOf(brokerParts[1]) : DEFAULT_ZK_PORT, DEFAULT_SO_TIMEOUT_MS, DEFAULT_BUFFER_SIZE, clientId, getSecurityProtocol());
     }
 
     public static SimpleConsumer getSimpleConsumerForTopicAndPartition(CuratorFramework curatorFramework, String topic, int partition, String clientId) throws Exception {
         PartitionMetadata partitionMetadata = findLeader(KafkaUtils.retrieveBrokerListFromZK(curatorFramework), topic, partition);
-        return new SimpleConsumer(partitionMetadata.leader().host(), partitionMetadata.leader().port(), DEFAULT_SO_TIMEOUT_MS, DEFAULT_BUFFER_SIZE, clientId);
+        return new SimpleConsumer(partitionMetadata.leader().host(), partitionMetadata.leader().port(), DEFAULT_SO_TIMEOUT_MS, DEFAULT_BUFFER_SIZE, clientId, getSecurityProtocol());
     }
 
     public static Iterator<Message> getMessagesFrom(final String topic, final int partition, final long firstOffset, CuratorFramework curatorFramework) throws Exception {
-        return getMessagesFromTo(topic, partition, firstOffset, null, "Client_" + topic + "_" + partition + "_" + firstOffset, curatorFramework);
+        return getMessagesFromTo(topic, partition, firstOffset, null, "Trumpet_" + topic + "-" + partition + "-" + firstOffset, curatorFramework);
     }
 
     public static Iterator<Message> getMessagesFrom(final String topic, final int partition, final long firstOffset, String clientId, CuratorFramework curatorFramework) throws Exception {
@@ -289,7 +306,7 @@ public class SimpleConsumerHelper {
     }
 
     public static Iterator<Message> getMessagesFromTo(final String topic, final int partition, final long firstOffset, final Long lastOffset, CuratorFramework curatorFramework) throws Exception {
-        return getMessagesFromTo(topic, partition, firstOffset, lastOffset, "Client_" + topic + "_" + partition + "_" + firstOffset + "_" + lastOffset, curatorFramework);
+        return getMessagesFromTo(topic, partition, firstOffset, lastOffset, "Trumpet_" + topic + "-" + partition + "-" + firstOffset + "-" + lastOffset, curatorFramework);
     }
 
     public static Iterator<Message> getMessagesFromTo(final String topic, final int partition, final long firstOffset, final Long lastOffset, final String clientName, final CuratorFramework curatorFramework) throws Exception {

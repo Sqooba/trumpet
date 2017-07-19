@@ -18,11 +18,13 @@ public class Metrics {
 
     private static final String leadershipUptime = name(TrumpetLeader.class, "leadership", "uptime");
     private static final Counter leadershipCounter = getRegistry().counter(name(TrumpetLeader.class, "leadership", "count"));
+    private static final Counter leadershipStatus = getRegistry().counter(name(TrumpetLeader.class, "leadership", "status"));
     private static final String uptime = name(TrumpetServer.class, "uptime");
     private static final String lastTransactionIdName = name(TrumpetServer.class, "transactions", "lastId");
     private static final Meter transactionInotifyMeter = getRegistry().meter(name(TrumpetServer.class, "transactions", "inotify"));
     private static final Meter transactionAllMeter = getRegistry().meter(name(TrumpetServer.class, "transactions", "all"));
     private static final Meter transactionKafkaMeter = getRegistry().meter(name(TrumpetServer.class, "transactions", "kafka"));
+    private static final Timer kafkaSendTimer = getRegistry().timer(name(TrumpetLeader.class, "kafka", "send"));
     private static final Timer sleepTimer = getRegistry().timer(name(TrumpetLeader.class, "sleep"));
     private static final Timer processingTimer = getRegistry().timer(name(TrumpetLeader.class, "processing"));
     private static final Timer editLogFileTimer = getRegistry().timer(name(TrumpetLeader.class, "editlogfile"));
@@ -41,6 +43,9 @@ public class Metrics {
 
     public static Counter leadershipCounter() {
         return leadershipCounter;
+    }
+    public static Counter leadershipStatus() {
+        return leadershipStatus;
     }
 
     public static void uptime() {
@@ -65,6 +70,10 @@ public class Metrics {
         });
     }
 
+    public static Gauge<Long> lastTransactionId() {
+        return getRegistry().getGauges().get(lastTransactionIdName);
+    }
+
     public static Meter inotifyTransaction() {
         return transactionInotifyMeter;
     }
@@ -75,6 +84,10 @@ public class Metrics {
 
     public static Meter kafkaTransaction() {
         return transactionKafkaMeter;
+    }
+
+    public static Timer kafkaSender() {
+        return kafkaSendTimer;
     }
 
     public static Timer sleep() {

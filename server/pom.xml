@@ -5,13 +5,13 @@
     <parent>
        <groupId>com.verisign.vscc.trumpet</groupId>
         <artifactId>trumpet-parent</artifactId>
-        <version>2.3.1-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>trumpet-server</artifactId>
     <name>Trumpet Server</name>
     <packaging>jar</packaging>
-    <version>2.3.1-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
 
     <description>
     </description>
@@ -52,13 +52,11 @@
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka_2.10</artifactId>
-            <version>0.8.2.1</version>
+            <artifactId>kafka_${scala.version}</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka_2.10</artifactId>
-            <version>0.8.2.1</version>
+            <artifactId>kafka_${scala.version}</artifactId>
             <classifier>test</classifier>
             <scope>test</scope>
         </dependency>
@@ -84,12 +82,19 @@
             <artifactId>rxjava</artifactId>
         </dependency>
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
+            <groupId>org.coursera</groupId>
+            <artifactId>dropwizard-metrics-datadog</artifactId>
+            <version>1.1.13</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>ch.qos.logback</groupId>
+                    <artifactId>logback-classic</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>ch.qos.logback</groupId>
+                    <artifactId>logback-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 
@@ -158,14 +163,14 @@
                 <activeByDefault>false</activeByDefault>
             </activation>
             <properties>
-                <rpm.copyright>2015, Verisign</rpm.copyright>
+                <rpm.copyright>2017, Verisign</rpm.copyright>
                 <rpm.group>Application/VSCC</rpm.group>
                 <rpm.rootprefix>/opt/trumpet</rpm.rootprefix>
                 <rpm.apprefix>${rpm.rootprefix}</rpm.apprefix>
                 <rpm.username>hdfs</rpm.username>
                 <rpm.groupname>hadoop</rpm.groupname>
                 <rpm.logdirname>logs</rpm.logdirname>
-                <rpm.targetos>el6</rpm.targetos>
+                <rpm.targetos>el7</rpm.targetos>
                 <rpm.targetArch>x86_64</rpm.targetArch>
                 <rpm.path>${rpm.apprefix}/server</rpm.path>
                 <rpm.logdirpath>${rpm.apprefix}/${rpm.logdirname}</rpm.logdirpath>
@@ -286,7 +291,7 @@
                                     <groupname>${rpm.groupname}</groupname>
                                     <sources>
                                         <source>
-                                            <location>${project.basedir}/src/main/scripts</location>
+                                            <location>${project.basedir}/src/main/bin</location>
                                             <!-- This prevents RPM python build failure on Jenkins -->
                                             <excludes>
                                                 <exclude>*.pyc</exclude>

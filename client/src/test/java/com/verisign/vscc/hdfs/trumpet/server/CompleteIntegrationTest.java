@@ -44,7 +44,7 @@ import static org.junit.Assert.assertTrue;
 
 public class CompleteIntegrationTest extends IntegrationTest {
 
-    @Test(timeout = 30000L)
+    @Test(timeout = 60000L)
     public void test() throws Exception {
 
         final FileSystem fs = cluster.getDfsCluster().getFileSystem(0);

@@ -54,7 +54,7 @@ cd $HOMEDIR
 ## Generate classpath from libraries in $LIBDIR, and add $CONFDIR if required
 OUR_CLASSPATH=$(find $LIBDIR -type f -name "*.jar" | paste -sd:)
 if [ -d "$CONFDIR" ]; then
-    OUR_CLASSPATH=$OUR_CLASSPATH:$CONFDIR
+    OUR_CLASSPATH=$CONFDIR:$OUR_CLASSPATH
 fi
 
 # Remote Debug Java Opts
@@ -64,20 +64,25 @@ fi
 #JAVA_OPTS="-XX:+HeapDumpOnOutOfMemoryError -verbose:gc"
 
 # Start up size for memory allocation pool for java VM.
-MS=512m
+MS=128m
 
 # Max size of memory allocation pool for java VM.
 MX=2048m
 
 JAVA_OPTS="$JAVA_OPTS -Xms$MS -Xmx$MX -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:-CMSConcurrentMTEnabled -XX:CMSInitiatingOccupancyFraction=70 -XX:+CMSParallelRemarkEnabled -XX:+DoEscapeAnalysis"
-JAVA_OPTS="$JAVA_OPTS -Dlogback.configurationFile=logback-to-console.xml"
+JAVA_OPTS="$JAVA_OPTS -Dlog4j.configuration=log4j-production.properties"
+
+if [ -f $HOMEDIR/config/kafka_client_jaas.conf ]
+then
+    JAVA_OPTS="${JAVA_OPTS} -Djava.security.auth.login.config=$HOMEDIR/config/kafka_client_jaas.conf"
+fi
 
 export HADOOP_USER_CLASSPATH_FIRST=true
 
 export HADOOP_CLASSPATH=$OUR_CLASSPATH
-export HADOOP_OPTS=$JAVA_OPTS
+export YARN_OPTS="-Djava.net.preferIPv4Stack=true $JAVA_OPTS"
 
-command="hadoop jar $LIBDIR/trumpet-server.jar com.verisign.vscc.hdfs.trumpet.server.tool.TrumpetStatus"
+command="yarn jar $LIBDIR/trumpet-server.jar com.verisign.vscc.hdfs.trumpet.server.TrumpetServerCLI"
 
 echo $command $@
 $command $@

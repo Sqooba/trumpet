@@ -1,6 +1,7 @@
 package com.verisign.vscc.hdfs.trumpet.kafka;
 
 import kafka.admin.AdminUtils;
+import kafka.admin.RackAwareMode;
 import kafka.javaapi.producer.Producer;
 import kafka.message.Message;
 import kafka.producer.KeyedMessage;
@@ -29,12 +30,13 @@ public class SimpleKafkaTest extends SetupSimpleKafkaCluster {
         Assert.assertNotNull(zkClient);
 
         // create topic
-        AdminUtils.createTopic(zkClient, topic, 1, 1, new Properties());
+        AdminUtils.createTopic(zkUtils, topic, 1, 1, new Properties(), RackAwareMode.Safe$.MODULE$);
 
         TestUtils.waitUntilMetadataIsPropagated(scala.collection.JavaConversions.asScalaBuffer(servers), topic, 0, 5000);
 
         // setup producer
-        Properties properties = TestUtils.getProducerConfig(kafkaServersToListOfString(servers));
+        Properties properties = TestUtils.getProducerConfig(kafkaServersString);
+        properties.put("security.protocol", SimpleConsumerHelper.getSecurityProtocol());
 
         System.out.println(properties);
 

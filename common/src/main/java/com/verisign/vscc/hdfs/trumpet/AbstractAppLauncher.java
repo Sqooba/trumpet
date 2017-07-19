@@ -1,6 +1,7 @@
 package com.verisign.vscc.hdfs.trumpet;
 
 import com.verisign.vscc.hdfs.trumpet.kafka.KafkaUtils;
+import com.verisign.vscc.hdfs.trumpet.kafka.SimpleConsumerHelper;
 import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -32,7 +33,9 @@ public abstract class AbstractAppLauncher implements Tool, Closeable {
     public static final String OPTION_ZK_CONNECT_USER = "zk.connect.user";
     public static final String OPTION_ZK_CONNECT_KAFKA = "zk.connect.kafka";
     public static final String OPTION_TOPIC = "topic";
+    public static final String OPTION_SECURITY_PROTOCOL = "security.protocol";
     protected static final String DEFAULT_TOPIC_NAME = "hdfs.inotify.events";
+    protected static final String DEFAULT_SECURITY_PROTOCOL = SimpleConsumerHelper.getSecurityProtocol();
     protected static final String OPTION_HELP = "help";
 
     protected final Logger LOG = LoggerFactory.getLogger(getClass());
@@ -103,6 +106,9 @@ public abstract class AbstractAppLauncher implements Tool, Closeable {
             return ReturnCode.WRONG_ZK_CONFIG;
         }
 
+        String securityProtocol = (String) options.valueOf(OPTION_SECURITY_PROTOCOL);
+        SimpleConsumerHelper.setSecurityProtocol(securityProtocol);
+
         if (tmpZkConnect != null) {
             zkConnectKafka = tmpZkConnect;
             zkConnectUser = tmpZkConnect;
@@ -172,6 +178,8 @@ public abstract class AbstractAppLauncher implements Tool, Closeable {
                 .withRequiredArg();
         getParser().accepts(OPTION_TOPIC, "Name of the kafka topic to publish the inotify events to")
                 .withRequiredArg().defaultsTo(DEFAULT_TOPIC_NAME);
+        getParser().accepts(OPTION_SECURITY_PROTOCOL, "Security Protocol to talk to Kafka")
+                .withRequiredArg().defaultsTo(DEFAULT_SECURITY_PROTOCOL);
 
         initParser();
 

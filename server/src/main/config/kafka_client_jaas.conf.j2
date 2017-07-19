@@ -1,0 +1,18 @@
+
+KafkaClient {
+  com.sun.security.auth.module.Krb5LoginModule required
+  useKeyTab=true
+  storeKey=true
+  serviceName="kafka"
+  keyTab="/etc/security/keytabs/hdfs.headless.keytab"
+  principal="hdfs-{{ hadoop_cluster_name }}@{{ hadoop_realm }}";
+};
+
+Client {
+  com.sun.security.auth.module.Krb5LoginModule required
+  useKeyTab=true
+  storeKey=true
+  serviceName="zookeeper"
+  keyTab="/etc/security/keytabs/hdfs.headless.keytab"
+  principal="hdfs-{{ hadoop_cluster_name }}@{{ hadoop_realm }}";
+};

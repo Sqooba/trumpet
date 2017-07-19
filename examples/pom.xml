@@ -5,13 +5,13 @@
     <parent>
         <groupId>com.verisign.vscc.trumpet</groupId>
         <artifactId>trumpet-parent</artifactId>
-        <version>2.3.1-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>trumpet-examples</artifactId>
     <name>Trumpet Client Examples</name>
     <packaging>jar</packaging>
-    <version>2.3.1-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
 
     <description>
         Trumpet Client Examples
@@ -51,21 +51,18 @@
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka_2.10</artifactId>
-            <version>0.8.2.1</version>
-            <classifier>test</classifier>
-            <scope>test</scope>
+            <artifactId>kafka-clients</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.apache.twill</groupId>
-            <artifactId>twill-api</artifactId>
-            <version>0.5.0-incubating</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.twill</groupId>
-            <artifactId>twill-yarn</artifactId>
-            <version>0.5.0-incubating</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.apache.twill</groupId>-->
+            <!--<artifactId>twill-api</artifactId>-->
+            <!--<version>0.5.0-incubating</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>org.apache.twill</groupId>-->
+            <!--<artifactId>twill-yarn</artifactId>-->
+            <!--<version>0.5.0-incubating</version>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>io.reactivex</groupId>
             <artifactId>rxjava</artifactId>

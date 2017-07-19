@@ -3,16 +3,15 @@ package com.verisign.vscc.hdfs.trumpet.server;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
-import com.verisign.vscc.hdfs.trumpet.client.BoundedTrumpetEventStreamer;
-import com.verisign.vscc.hdfs.trumpet.client.InfiniteTrumpetEventStreamer;
-import com.verisign.vscc.hdfs.trumpet.dto.EventAndTxId;
 import com.verisign.vscc.hdfs.trumpet.kafka.KafkaUtils;
-import com.verisign.vscc.hdfs.trumpet.kafka.SimpleConsumerHelper;
 import kafka.admin.AdminUtils;
+import kafka.admin.RackAwareMode;
+import kafka.admin.RackAwareMode$;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.*;
 import org.I0Itec.zkclient.ZkClient;
+import org.I0Itec.zkclient.ZkConnection;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
@@ -25,10 +24,13 @@ import org.apache.hadoop.hdfs.DFSTestUtil;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.apache.hadoop.hdfs.qjournal.MiniQJMHACluster;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.kafka.common.protocol.SecurityProtocol;
+import org.awaitility.Awaitility;
+import org.awaitility.Duration;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
+import scala.Option$;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -37,7 +39,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public abstract class IntegrationTest {
 
@@ -52,7 +56,9 @@ public abstract class IntegrationTest {
 
     protected String zkConnect;
     protected TestingCluster zkTestingCluster;
+    protected ZkConnection zkConnection;
     protected ZkClient zkClient;
+    protected ZkUtils zkUtils;
     protected KafkaServer kafkaServer;
     protected List<KafkaServer> servers = new ArrayList<>();
 
@@ -112,17 +118,25 @@ public abstract class IntegrationTest {
 
         zkConnect = zkTestingCluster.getConnectString();
 
-        zkClient = new ZkClient(zkConnect, zkConnectionTimeout, zkSessionTimeout, ZKStringSerializer$.MODULE$);
+        zkConnection = new ZkConnection(zkConnect, zkSessionTimeout);
+        zkClient = new ZkClient(zkConnection, zkConnectionTimeout, ZKStringSerializer$.MODULE$);
+        zkUtils = new ZkUtils(zkClient, zkConnection, false);
 
         // setup Broker
-        int port = TestUtils.choosePort();
-        Properties props = TestUtils.createBrokerConfig(brokerId, port, true);
+        int port = TestUtils.RandomPort();
+        Properties props = TestUtils.createBrokerConfig(brokerId, zkConnect, false, false,
+                port, Option$.MODULE$.empty(), Option$.MODULE$.empty(), Option$.MODULE$.empty(), true, false, -1,
+                false, -1, false, -1, Option$.MODULE$.empty());
+
         props.put("zookeeper.connect", zkConnect);
 
         KafkaConfig config = new KafkaConfig(props);
         Time mock = new MockTime();
         kafkaServer = TestUtils.createServer(config, mock);
         servers.add(kafkaServer);
+
+        Awaitility.await().atMost(Duration.FIVE_SECONDS).until(() -> !zkUtils.getAllBrokersInCluster().isEmpty());
+        assertEquals(servers.size(), zkUtils.getAllBrokersInCluster().size());
 
         curatorFramework = CuratorFrameworkFactory.builder().connectString(zkConnect)
                 .retryPolicy(new ExponentialBackoffRetry(1000, 3))
@@ -132,7 +146,7 @@ public abstract class IntegrationTest {
         assertTrue("Failed to connect to Zookeeper " + zkConnect, curatorFramework.blockUntilConnected(60, TimeUnit.SECONDS));
 
         if (!KafkaUtils.topicExists(trumpetTopicName, curatorFramework)) {
-            AdminUtils.createTopic(zkClient, trumpetTopicName, 1, 1, new Properties());
+            AdminUtils.createTopic(zkUtils, trumpetTopicName, 1, 1, new Properties(), RackAwareMode.Safe$.MODULE$);
             TestUtils.waitUntilMetadataIsPropagated(scala.collection.JavaConversions.asScalaBuffer(servers), trumpetTopicName, 0, TimeUnit.SECONDS.toMillis(60));
         }
 
@@ -166,17 +180,16 @@ public abstract class IntegrationTest {
             public void run() {
                 try {
                     int res = ToolRunner.run(hdfsConf, trumpetServerCLI, argsList.toArray(new String[0]));
+                    assertEquals(TrumpetServerCLI.ReturnCode.ALL_GOOD, res);
                 } catch (Exception e) {
                     System.err.println("Exception occurred in Trumpet");
                     e.printStackTrace();
+                    fail();
                 }
             }
         });
 
-        do {
-            Thread.sleep(1000);
-            System.out.println("Waiting for Trumpet to initialize");
-        } while (!trumpetServerCLI.isInitialized());
+        Awaitility.await().atMost(Duration.ONE_MINUTE).until(() -> trumpetServerCLI.isInitialized());
 
     }
 
@@ -214,7 +227,7 @@ public abstract class IntegrationTest {
             @Nullable
             @Override
             public String apply(KafkaServer input) {
-                return input.socketServer().host() + ":" + input.socketServer().port();
+                return "127.0.0.1:" + input.boundPort(SecurityProtocol.PLAINTEXT);
             }
         }));
     }

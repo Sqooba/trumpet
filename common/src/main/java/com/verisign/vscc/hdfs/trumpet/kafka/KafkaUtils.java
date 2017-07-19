@@ -3,10 +3,16 @@ package com.verisign.vscc.hdfs.trumpet.kafka;
 import com.google.common.base.Preconditions;
 import com.verisign.vscc.hdfs.trumpet.utils.TrumpetHelper;
 import kafka.admin.AdminUtils;
+import kafka.admin.RackAwareMode;
 import kafka.message.Message;
+import kafka.utils.ZKStringSerializer$;
+import kafka.utils.ZkUtils;
 import org.I0Itec.zkclient.ZkClient;
+import org.I0Itec.zkclient.ZkConnection;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.kafka.common.security.JaasUtils;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -22,18 +28,27 @@ public class KafkaUtils {
     public static final int DEFAULT_NUM_OF_PARTITION = 1;
     public static final int DEFAULT_REPLICATION = 3;
 
-    private static ZkClient fromCurator(CuratorFramework curatorFramework) {
-        ZkClient zkClient1 = new ZkClient(curatorFramework.getZookeeperClient().getCurrentConnectionString(), 10000, 10000);
+    public static int DEFAULT_ZK_CONNECTION_TIMEOUT = 10000;
+    public static int DEFAULT_ZK_SESSION_TIMEOUT = 10000;
+
+    private static ZkUtils newZkUtils(CuratorFramework curatorFramework) {
+        ZkConnection zkConnection = new ZkConnection(curatorFramework.getZookeeperClient().getCurrentConnectionString(), DEFAULT_ZK_SESSION_TIMEOUT);
+        ZkClient zkClient1 = new ZkClient(zkConnection, DEFAULT_ZK_CONNECTION_TIMEOUT, ZKStringSerializer$.MODULE$);
+
         zkClient1.waitUntilConnected();
-        return zkClient1;
+        return new ZkUtils(zkClient1, zkConnection, JaasUtils.isZkSecurityEnabled());
     }
 
     public static List<String> retrieveBrokerListFromZK(final CuratorFramework curatorFramework) throws Exception {
-        final List<String> brokers = new LinkedList<>();
-        List<String> znodes = curatorFramework.getChildren().forPath("/brokers/ids");
+        final List<String> znodes = curatorFramework.getChildren().forPath(ZkUtils.BrokerIdsPath());
+        final List<String> brokers = new ArrayList<>(znodes.size());
         for (String znode : znodes) {
-            Map<String, Object> stringObjectMap = TrumpetHelper.toMap(curatorFramework.getData().forPath("/brokers/ids/" + znode));
-            brokers.add(stringObjectMap.get("host").toString() + ":" + stringObjectMap.get("port"));
+            Map<String, Object> stringObjectMap = TrumpetHelper.toMap(curatorFramework.getData().forPath(ZkUtils.BrokerIdsPath() + "/" + znode));
+            List<String> endpoints = (List<String>)stringObjectMap.get("endpoints");
+            String endpoint = getEndpoint(endpoints, SimpleConsumerHelper.getSecurityProtocol());
+            if (endpoint != null) {
+                brokers.add(endpoint);
+            }
         }
         return brokers;
     }
@@ -45,25 +60,26 @@ public class KafkaUtils {
     public static void createTopic(String topic, int partitions, int replication, CuratorFramework curatorFramework) {
         Preconditions.checkArgument(partitions > 0);
         Preconditions.checkArgument(replication > 0);
-        ZkClient zkClient = fromCurator(curatorFramework);
+        ZkUtils zkUtils = null;
 
         try {
-            AdminUtils.createTopic(zkClient, topic, partitions, replication, new Properties());
+            zkUtils = newZkUtils(curatorFramework);
+            AdminUtils.createTopic(zkUtils, topic, partitions, replication, new Properties(), RackAwareMode.Disabled$.MODULE$);
         } finally {
-            if (zkClient != null) {
-                zkClient.close();
+            if (zkUtils != null) {
+                zkUtils.close();
             }
         }
     }
 
     public static boolean topicExists(String topic, CuratorFramework curatorFramework) {
-        ZkClient zkClient = fromCurator(curatorFramework);
+        ZkUtils zkUtils = null;
         try {
-            zkClient = fromCurator(curatorFramework);
-            return AdminUtils.topicExists(zkClient, topic);
+            zkUtils = newZkUtils(curatorFramework);
+            return AdminUtils.topicExists(zkUtils, topic);
         } finally {
-            if (zkClient != null) {
-                zkClient.close();
+            if (zkUtils != null) {
+                zkUtils.close();
             }
         }
     }
@@ -73,5 +89,14 @@ public class KafkaUtils {
         byte[] dst = new byte[buf.limit()];
         buf.get(dst);
         return dst;
+    }
+
+    public static String getEndpoint(List<String> endpoints, String securityProtocol) throws IOException {
+        for (String endpoint: endpoints) {
+            if (endpoint.startsWith(securityProtocol + "://")) {
+                return endpoint.substring((securityProtocol + "://").length());
+            }
+        }
+        return null;
     }
 }

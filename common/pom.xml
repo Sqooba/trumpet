@@ -5,12 +5,13 @@
     <parent>
         <groupId>com.verisign.vscc.trumpet</groupId>
         <artifactId>trumpet-parent</artifactId>
-        <version>2.3.1-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
     </parent>
+
     <artifactId>trumpet-common</artifactId>
     <name>Trumpet Common</name>
     <packaging>jar</packaging>
-    <version>2.3.1-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
 
     <description>
     </description>
@@ -31,13 +32,21 @@
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka_2.10</artifactId>
-            <version>0.8.2.1</version>
+            <artifactId>kafka_${scala.version}</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka_2.10</artifactId>
-            <version>0.8.2.1</version>
+            <artifactId>kafka_${scala.version}</artifactId>
+            <classifier>test</classifier>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
             <classifier>test</classifier>
             <scope>test</scope>
         </dependency>
@@ -61,12 +70,10 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.3.2</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.5.4</version>
         </dependency>
     </dependencies>
 

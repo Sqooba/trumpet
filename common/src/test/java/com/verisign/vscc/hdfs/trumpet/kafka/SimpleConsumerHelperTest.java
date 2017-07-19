@@ -2,6 +2,7 @@ package com.verisign.vscc.hdfs.trumpet.kafka;
 
 import com.google.common.base.Preconditions;
 import kafka.admin.AdminUtils;
+import kafka.admin.RackAwareMode;
 import kafka.javaapi.producer.Producer;
 import kafka.message.Message;
 import kafka.utils.TestUtils;
@@ -26,7 +27,7 @@ public class SimpleConsumerHelperTest extends SetupSimpleKafkaCluster {
         final int partition = 0;
 
         if (!KafkaUtils.topicExists(topic, curatorFramework)) {
-            AdminUtils.createTopic(zkClient, topic, 1, 1, new Properties());
+            AdminUtils.createTopic(zkUtils, topic, 1, 1, new Properties(), RackAwareMode.Safe$.MODULE$);
             TestUtils.waitUntilMetadataIsPropagated(scala.collection.JavaConversions.asScalaBuffer(servers), topic, 0, 5000);
         }
 
@@ -65,7 +66,7 @@ public class SimpleConsumerHelperTest extends SetupSimpleKafkaCluster {
         final int partition = 0;
 
         if (!KafkaUtils.topicExists(topic, curatorFramework)) {
-            AdminUtils.createTopic(zkClient, topic, 1, 1, new Properties());
+            AdminUtils.createTopic(zkUtils, topic, 1, 1, new Properties(), RackAwareMode.Safe$.MODULE$);
             TestUtils.waitUntilMetadataIsPropagated(scala.collection.JavaConversions.asScalaBuffer(servers), topic, 0, 5000);
         }
 
