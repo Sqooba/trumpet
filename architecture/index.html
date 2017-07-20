@@ -216,6 +216,12 @@ This responsibility is delegated to the clients and most likely the Kafka consum
 events are published in Kafka as simple JSON dictionary. 
 In the client Java API, the event is retrieved back as a simple <a href="http://docs.oracle.com/javase/7/docs/api/java/util/Map.html">Map</a>.
 See the section on <a href="../applications">writing client applications</a> for more details about the events format.</p>
+<p>Example of events trace, resulting of <code>hdfs dfs -copyToLocal data.bin /tmp</code>, followed by <code>hdfs dfs -rm -skipTrash /tmp/data.bin</code>: </p>
+<p><code>$json
+{"replication":3,"txId":5017994,"eventType":"CREATE","symlinkTarget":null,"path":"/tmp/data.bin._COPYING_","groupName":"hdfs","ownerName":"bperroud","ctime":1500461689053,"defaultBlockSize":134217728,"iNodeType":"FILE","perms":{"stickyBit":false,"userAction":"READ_WRITE","groupAction":"READ","otherAction":"READ","encryptedBit":false,"aclBit":false},"class":"org.apache.hadoop.hdfs.inotify.Event$CreateEvent","overwrite":true}
+{"path":"/tmp/data.bin._COPYING_","txId":5017998,"eventType":"CLOSE","fileSize":5120000,"class":"org.apache.hadoop.hdfs.inotify.Event$CloseEvent","timestamp":1500461689312}
+{"txId":5017999,"eventType":"RENAME","class":"org.apache.hadoop.hdfs.inotify.Event$RenameEvent","dstPath":"/tmp/data.bin","srcPath":"/tmp/data.bin._COPYING_","timestamp":1500461689322}
+{"path":"/tmp/data.bin","txId":5018028,"eventType":"UNLINK","class":"org.apache.hadoop.hdfs.inotify.Event$UnlinkEvent","timestamp":1500461733461}</code></p>
 <h2 id="leader-election">Leader Election</h2>
 <p>Hadoop runs with HA in mind, and this project follows the same concept. Trumpet is designed to run alongside the JournalNode 
 (or NameNode) process, reading from the local <code>dfs.*.name.dir</code> directory. The idea is to run one Trumpet server process per 
