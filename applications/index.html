@@ -3,7 +3,10 @@
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
   
   <title>Write your Apps - Trumpet</title>
   
@@ -21,6 +24,8 @@
   <script>
     // Current page data
     var mkdocs_page_name = "Write your Apps";
+    var mkdocs_page_input_path = "applications.md";
+    var mkdocs_page_url = "/applications/";
   </script>
   
   <script src="../js/jquery-2.1.1.min.js"></script>
@@ -88,6 +93,9 @@
                 
             
                 <li class="toctree-l3"><a href="#events-format">Events Format</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#txid-is-a-number">txId is a Number!</a></li>
                 
             
                 <li class="toctree-l3"><a href="#example-application">Example Application</a></li>
@@ -513,8 +521,15 @@ and
 </tr>
 </tbody>
 </table>
+<h2 id="txid-is-a-number"><code>txId</code> is a Number!</h2>
+<p>The JSON object published contains the <code>txId</code>, which is actually a proper JSON number.
+This means that it might be decoded in Integer or Long, depending on the number.
+The proper way to decode it is to make it a <code>Number</code> and get the long value:</p>
+<pre><code>Long txtId = ((Number) event.get(EventAndTxId.FIELD_TXID)).longValue();
+</code></pre>
+
 <h2 id="example-application">Example Application</h2>
-<p><a href="https://github.com/verisign/trumpet/blob/master/client/src/main/java/com/verisign/vscc/hdfs/trumpet/client/example/TestApp.java">com.verisign.vscc.hdfs.trumpet.client.example.TestApp</a> 
+<p><a href="https://github.com/verisign/trumpet/blob/master/examples/src/main/java/com/verisign/vscc/hdfs/trumpet/client/example/TestApp.java">com.verisign.vscc.hdfs.trumpet.client.example.TestApp</a> 
 is a sample application, listening to Trumpet and filtering out <code>_SUCCESS</code> files, indicating the success of a MapReduce application.</p>
 <p>It would be really easy to start a distcp job from here to, for instance, replicate the newly created data into a different remote cluster.</p>
               
@@ -524,7 +539,7 @@ is a sample application, listening to Trumpet and filtering out <code>_SUCCESS</
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../operations/" class="btn btn-neutral float-right" title="For DevOps"/>Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../operations/" class="btn btn-neutral float-right" title="For DevOps">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../installation/" class="btn btn-neutral" title="I want it!"><span class="icon icon-circle-arrow-left"></span> Previous</a>

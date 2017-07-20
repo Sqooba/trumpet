@@ -3,7 +3,10 @@
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
   
   <title>I want it! - Trumpet</title>
   
@@ -21,6 +24,8 @@
   <script>
     // Current page data
     var mkdocs_page_name = "I want it!";
+    var mkdocs_page_input_path = "installation.md";
+    var mkdocs_page_url = "/installation/";
   </script>
   
   <script src="../js/jquery-2.1.1.min.js"></script>
@@ -222,9 +227,16 @@ which uses reflection to work around compatibility issues.</p>
 <li>HDP 2.2, 2.3 -- <code>mvn clean install -Phdp22</code>, <code>mvn clean install -Phdp23</code></li>
 </ul>
 <h1 id="run-it">Run it</h1>
+<p><strong>Create Topic</strong></p>
+<p>Trumpet is configure to NOT create the topic itself. You have to create the topic manually before startin the server.</p>
+<p>In HDP, it would look something like:</p>
+<pre><code class="bash">$ /usr/hdp/current/kafka-broker/bin/kafka-topics.sh --create --zookeeper &lt;zk_ip:2181&gt; --replication-factor 4 --partitions 1 --topic hdfs.inotify.events
+</code></pre>
+
 <p>Trumpet server is a long running process to run alongside the JournalNode. A <a href="http://www.supervisord.org">supervisord</a> 
 <a href="https://github.com/verisign/trumpet/tree/master/server/src/main/config/trumpet-server.ini">config file</a> is also provided if you'd like to use supervisord daemon to launch Trumpet.</p>
 <p>Once the RPM (or equivalent) is installed, manually launch Trumpet like this:</p>
+<p><strong>Run Trumpet</strong></p>
 <pre><code class="bash">$ /opt/trumpet/server/bin/trumpet.sh --zk.connect &lt;zk_ip:2181&gt;
 </code></pre>
 
@@ -251,7 +263,7 @@ sudo supervisorctl add trumpet # will start Trumpet as autostart is turned on
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../applications/" class="btn btn-neutral float-right" title="Write your Apps"/>Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../applications/" class="btn btn-neutral float-right" title="Write your Apps">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../architecture/" class="btn btn-neutral" title="How it works"><span class="icon icon-circle-arrow-left"></span> Previous</a>

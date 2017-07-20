@@ -3,7 +3,10 @@
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
   
   <title>How it works - Trumpet</title>
   
@@ -21,6 +24,8 @@
   <script>
     // Current page data
     var mkdocs_page_name = "How it works";
+    var mkdocs_page_input_path = "architecture.md";
+    var mkdocs_page_url = "/architecture/";
   </script>
   
   <script src="../js/jquery-2.1.1.min.js"></script>
@@ -196,6 +201,12 @@ An example of topic creation would be:</p>
 <pre><code class="bash">$ kafka-topics --create --zookeeper &lt;zk_ip:2181&gt; --replication-factor 4 --partitions 1 --topic hdfs.inotify.events
 </code></pre>
 
+<ul>
+<li>HDP with Kafka package installed</li>
+</ul>
+<pre><code class="bash">$ /usr/hdp/current/kafka-broker/bin/kafka-topics.sh --create --zookeeper &lt;zk_ip:2181&gt; --replication-factor 4 --partitions 1 --topic hdfs.inotify.events
+</code></pre>
+
 <p>Of course the scalability of the client applications reading the transactions will be influenced by 
 the scalability of your Kafka cluster. Trumpet guarantees <strong>exactly once</strong> delivery of the HDFS event, 
 but does not guarantee any transaction or reader persistence to the client application. 
@@ -252,7 +263,7 @@ Kafka discovery and leader election. Use:</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../installation/" class="btn btn-neutral float-right" title="I want it!"/>Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../installation/" class="btn btn-neutral float-right" title="I want it!">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href=".." class="btn btn-neutral" title="What is Trumpet"><span class="icon icon-circle-arrow-left"></span> Previous</a>

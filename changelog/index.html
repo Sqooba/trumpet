@@ -3,7 +3,10 @@
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
   
   <title>Changelog - Trumpet</title>
   
@@ -21,6 +24,8 @@
   <script>
     // Current page data
     var mkdocs_page_name = "Changelog";
+    var mkdocs_page_input_path = "changelog.md";
+    var mkdocs_page_url = "/changelog/";
   </script>
   
   <script src="../js/jquery-2.1.1.min.js"></script>
@@ -90,6 +95,9 @@
         
             <ul>
             
+                <li class="toctree-l3"><a href="#version-30-sqooba">Version 3.0-sqooba</a></li>
+                
+            
                 <li class="toctree-l3"><a href="#version-231">Version 2.3.1</a></li>
                 
             
@@ -144,6 +152,17 @@
             <div class="section">
               
                 <p>Trumpet Changelog.</p>
+<h2 id="version-30-sqooba">Version 3.0-sqooba</h2>
+<ul>
+<li>Kafka SASL support (using HDP version of Kafka, thanks to
+  <a href="https://github.com/hortonworks/kafka-release/commit/d2010c4206ef02071631a1ee1668b63be7b21db7">this commit</a>)</li>
+<li>Remove support for CDH/Apache versions</li>
+<li>Watchdogs (EditLog, Producer)</li>
+<li>Java 8 only</li>
+<li>Statsd reporter using <code>--statsd.enable</code> option</li>
+<li>Remove graphite</li>
+<li><code>src/main/scripts</code> renamed in <code>src/main/bin</code> to be consistent with RPM structure</li>
+</ul>
 <h2 id="version-231">Version 2.3.1</h2>
 <ul>
 <li>Avoid message leak in the Infinite Streamer</li>
@@ -169,7 +188,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../license/" class="btn btn-neutral float-right" title="License"/>Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../license/" class="btn btn-neutral float-right" title="License">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../operations/" class="btn btn-neutral" title="For DevOps"><span class="icon icon-circle-arrow-left"></span> Previous</a>
